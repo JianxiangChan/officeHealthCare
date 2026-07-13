@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw
 # === 常量 ===================================================================
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
-LOG_FILE = Path(__file__).parent / "reminder_log.txt"
+LOG_FILE = Path(__file__).parent / "logs" / "reminder_log.txt"
 
 DEFAULT_CONFIG = {
     "water_interval_minutes": 30,

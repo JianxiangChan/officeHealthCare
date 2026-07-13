@@ -1,0 +1,12 @@
+﻿__pycache__/
+*.pyc
+logs/
+*.bat
+stderr*.txt
+stdout*.txt
+pystd*.txt
+tray_*.txt
+test_*.py
+search_*.py
+update_*.py
+fix_*.py
