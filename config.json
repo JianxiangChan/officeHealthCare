@@ -1,0 +1,5 @@
+{
+  "water_interval_minutes": 30,
+  "stand_interval_minutes": 45,
+  "enabled": true
+}
