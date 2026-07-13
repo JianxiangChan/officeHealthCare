@@ -28,6 +28,7 @@ LOG_FILE = Path(__file__).parent / "logs" / "reminder_log.txt"
 DEFAULT_CONFIG = {
     "water_interval_minutes": 30,
     "stand_interval_minutes": 45,
+    "stand_duration_minutes": 15,
     "enabled": True,
 }
 
@@ -45,6 +46,12 @@ REMIND_LABELS = {
         "icon": "\U0001f9cd",
         "title": "活动时间",
         "msg": "久坐提醒！站起来走走，伸个懒腰活动一下~",
+    },
+    "sit": {
+        "name": "坐下",
+        "icon": "💺",
+        "title": "休息结束",
+        "msg": "已站立一会儿了，可以坐下继续工作啦~",
     },
 }
 
@@ -158,6 +165,7 @@ class ReminderApp:
         self.config = load_config()
         self._water_timer = None
         self._stand_timer = None
+        self._standing_timer = None
         self._icon = None
 
     # -- 定时器 ---------------------------------------------------------------
@@ -176,12 +184,34 @@ class ReminderApp:
         _log_reminder(kind)
         _show_popup(info["title"], info["msg"], info["icon"])
 
-        key = f"{kind}_interval_minutes"
-        timer = self._start_timer(
+        if kind == "stand":
+            if self._standing_timer:
+                self._standing_timer.cancel()
+            dur = self.config.get("stand_duration_minutes", 15) * 60
+            self._standing_timer = self._start_timer(dur, self._remind_sit)
+        else:
+            key = f"{kind}_interval_minutes"
+            timer = self._start_timer(
+                self.config[key] * 60,
+                lambda k=kind: self._remind(k),
+            )
+            setattr(self, f"_{kind}_timer", timer)
+
+    def _remind_sit(self):
+        if not self.config["enabled"]:
+            return
+        info = REMIND_LABELS["sit"]
+        _log_reminder("sit")
+        _show_popup(info["title"], info["msg"], info["icon"])
+        key = "stand_interval_minutes"
+        if self._stand_timer:
+            self._stand_timer.cancel()
+        self._stand_timer = self._start_timer(
             self.config[key] * 60,
-            lambda k=kind: self._remind(k),
+            lambda: self._remind("stand"),
         )
-        setattr(self, f"_{kind}_timer", timer)
+        self._standing_timer = None
+        self._rebuild_menu()
 
     def start_timers(self):
         self.stop_timers()
@@ -201,6 +231,9 @@ class ReminderApp:
             if t:
                 t.cancel()
                 setattr(self, f"_{kind}_timer", None)
+        if self._standing_timer:
+            self._standing_timer.cancel()
+            self._standing_timer = None
 
     # -- 右键菜单 -------------------------------------------------------------
 
@@ -260,6 +293,11 @@ class ReminderApp:
     def _open_log(icon, item):
         if LOG_FILE.exists():
             os.startfile(str(LOG_FILE))
+
+    def _status_text(self):
+        if self._standing_timer:
+            return "  🧍 站立中..."
+        return "  💺 坐着"
 
     def _rebuild_menu(self):
         if self._icon:
