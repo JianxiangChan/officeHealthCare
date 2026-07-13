@@ -82,6 +82,7 @@ def _log_reminder(kind):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     name = REMIND_LABELS[kind]["name"]
     try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{ts}] {name}\n")
     except Exception:
