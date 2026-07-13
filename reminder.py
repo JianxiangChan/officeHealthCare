@@ -33,6 +33,7 @@ DEFAULT_CONFIG = {
 }
 
 INTERVAL_OPTIONS = [15, 20, 25, 30, 45, 60, 90, 120]
+STAND_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60]
 
 REMIND_LABELS = {
     "water": {
@@ -274,6 +275,7 @@ class ReminderApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("喝水间隔", self._make_interval_submenu("water")),
             pystray.MenuItem("站立间隔", self._make_interval_submenu("stand")),
+            pystray.MenuItem("站立时长", self._make_duration_submenu()),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(
                 "\u2705 已启用" if enabled else "\u23f8 已暂停",
@@ -299,10 +301,33 @@ class ReminderApp:
             return "  🧍 站立中..."
         return "  💺 坐着"
 
+
+    def _make_duration_submenu(self):
+        current = self.config.get("stand_duration_minutes", 15)
+        items = []
+        for m in STAND_DURATION_OPTIONS:
+            check = "✅ " if m == current else ""
+            label = f"{m}分钟{check}"
+            items.append(
+                pystray.MenuItem(label, self._make_duration_callback(m))
+            )
+        return pystray.Menu(*items)
+
+    def _make_duration_callback(self, minutes):
+        def callback(icon, item):
+            self._set_duration(minutes)
+        return callback
+
     def _rebuild_menu(self):
         if self._icon:
             self._icon.menu = self._make_menu()
             self._icon.update_menu()
+
+    def _set_duration(self, minutes):
+        self.config["stand_duration_minutes"] = minutes
+        save_config(self.config)
+        _show_popup("设置已更新", f"站立时长已设为 {minutes} 分钟", "🧍")
+        self._rebuild_menu()
 
     def _set_interval(self, kind, minutes):
         self.config[f"{kind}_interval_minutes"] = minutes
