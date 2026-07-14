@@ -29,6 +29,8 @@ class ReminderController:
         self._stand_timer = None
         self._standing_timer = None
         self._heartbeat_timer = None
+        self._water_timer_start = None
+        self._stand_timer_start = None
 
         # === 定时器工具方法 ==================================================
 
@@ -206,11 +208,20 @@ class ReminderController:
         self._cancel_timer(self._heartbeat_timer)
         self._heartbeat_timer = self._start_timer(300, self._on_heartbeat)
 
-    def _on_heartbeat(self):
-        s = "HB: "
-        s += f"water={self._config.water_interval}m stand={self._config.stand_interval}m "
-        s += f"win={self._config.start_time}-{self._config.end_time} "
-        s += "on" if self._config.enabled else "off"
+    def _on_heartbeat(self, now=None):
+        from datetime import datetime
+        if now is None:
+            now = datetime.now()
+        wr = self._water_timer_start
+        sr = self._stand_timer_start
+        w_remain = max(0, int((self._config.water_interval * 60 - (now - wr).total_seconds()) / 60)) if wr else self._config.water_interval
+        s_remain = max(0, int((self._config.stand_interval * 60 - (now - sr).total_seconds()) / 60)) if sr else self._config.stand_interval
+        s = "HB: w{}({}m) s{}({}m) win={}-{} {}".format(
+            self._config.water_interval, w_remain,
+            self._config.stand_interval, s_remain,
+            self._config.start_time, self._config.end_time,
+            "on" if self._config.enabled else "off",
+        )
         self._log.heartbeat(s)
         self._heartbeat_timer = None
         self._schedule_heartbeat()
@@ -227,6 +238,8 @@ class ReminderController:
         self._stand_timer = None
         self._standing_timer = None
         self._heartbeat_timer = None
+        self._water_timer_start = None
+        self._stand_timer_start = None
 
     def start(self):
         """应用入口：创建托盘图标、启动定时器、进入事件循环（阻塞）。"""
