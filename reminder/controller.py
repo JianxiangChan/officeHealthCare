@@ -58,6 +58,8 @@ class ReminderController:
     # -- Timer scheduling -----------------------------------------------------
 
     def _schedule_water(self):
+        from datetime import datetime
+        self._water_timer_start = datetime.now()
         """Schedule next water reminder."""
         self._cancel_timer(self._water_timer)
         self._water_timer = self._start_timer(
@@ -65,6 +67,8 @@ class ReminderController:
         )
 
     def _schedule_stand(self):
+        from datetime import datetime
+        self._stand_timer_start = datetime.now()
         """Schedule next stand reminder."""
         self._cancel_timer(self._stand_timer)
         self._stand_timer = self._start_timer(
