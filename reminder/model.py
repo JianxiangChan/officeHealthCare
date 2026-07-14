@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """Model: config, log, reminder labels -- pure data + persistence, zero deps."""
 
 import json
@@ -8,6 +8,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 CONFIG_FILE = BASE_DIR / "config.json"
 LOG_FILE = BASE_DIR / "logs" / "reminder_log.txt"
+VERSION_FILE = BASE_DIR / "VERSION"
+
+def get_version():
+    try:
+        return VERSION_FILE.read_text("utf-8").strip()
+    except Exception:
+        return "0.0.0"
 
 # === Default config ======================================================
 DEFAULT_CONFIG = {

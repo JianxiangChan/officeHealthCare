@@ -11,6 +11,7 @@ from .model import (
     REMIND_LABELS,
     STAND_DURATION_OPTIONS,
     TIME_OPTIONS,
+    get_version,
 )
 from .view import (
     TrayView,
@@ -216,7 +217,7 @@ class ReminderController:
         sr = self._stand_timer_start
         w_remain = max(0, int((self._config.water_interval * 60 - (now - wr).total_seconds()) / 60)) if wr else self._config.water_interval
         s_remain = max(0, int((self._config.stand_interval * 60 - (now - sr).total_seconds()) / 60)) if sr else self._config.stand_interval
-        s = "HB: w{}({}m) s{}({}m) win={}-{} {}".format(
+        s = "HB: v{} w{}({}m) s{}({}m) win={}-{} {}".format(get_version(), 
             self._config.water_interval, w_remain,
             self._config.stand_interval, s_remain,
             self._config.start_time, self._config.end_time,
