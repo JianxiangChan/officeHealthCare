@@ -14,7 +14,7 @@
 
 ## 项目结构（MVC 架构）
 
-`
+```
 reminder/
 ├── main.py                 # 启动入口
 ├── 启动健康提醒.bat          # Windows 双击启动脚本
@@ -33,17 +33,17 @@ reminder/
 │   └── test_time_window_ctrl.py
 └── logs/                   # 提醒日志目录（自动创建）
     └── reminder_log.txt
-`
+```
 
 ## 安装
 
-`ash
+```bash
 pip install -r requirements.txt
-`
+```
 
 ## 使用
 
-`ash
+```bash
 # 普通启动（带控制台窗口，适合调试）
 python main.py
 
@@ -52,21 +52,21 @@ pythonw main.py
 
 # 或直接双击
 启动健康提醒.bat
-`
+```
 
 启动后系统托盘会出现蓝色水滴图标，右键即可配置间隔、时间窗口、手动触发提醒或查看日志。
 
 ## 运行测试
 
-`ash
+```bash
 python -m pytest tests/ -v
-`
+```
 
 ## 配置
 
-所有设置保存在 config.json：
+所有设置保存在 `config.json`：
 
-`json
+```json
 {
   "water_interval_minutes": 30,
   "stand_interval_minutes": 45,
@@ -75,15 +75,15 @@ python -m pytest tests/ -v
   "start_time": "08:30",
   "end_time": "20:30"
 }
-`
+```
 
 | 字段 | 说明 |
 |---|---|
-| water_interval_minutes | 喝水提醒间隔 |
-| stand_interval_minutes | 坐多久后提醒站立 |
-| stand_duration_minutes | 站立多久后提醒坐下 |
-| start_time / end_time | 每日提醒时间窗口 |
-| enabled | 启用/暂停 |
+| `water_interval_minutes` | 喝水提醒间隔 |
+| `stand_interval_minutes` | 坐多久后提醒站立 |
+| `stand_duration_minutes` | 站立多久后提醒坐下 |
+| `start_time` / `end_time` | 每日提醒时间窗口 |
+| `enabled` | 启用/暂停 |
 
 ## 技术栈
 
