@@ -251,6 +251,8 @@ class ReminderController:
         icon_img = create_tray_icon_image()
         self._view.create_icon(icon_img, "健康提醒助手", self.build_menu())
         self._start_all_timers()
+        if self._log.has_standing_without_sit():
+            self._on_stand_duration_end()
         self._view.run()
 
     def stop(self):

@@ -183,6 +183,26 @@ class ReminderLog:
             pass
 
     @staticmethod
+    def has_standing_without_sit():
+        """Return True if last non-heartbeat event was a stand."""
+        try:
+            if LOG_FILE.exists():
+                text = LOG_FILE.read_text("utf-8").strip()
+                if not text:
+                    return False
+                sn = REMIND_LABELS["stand"]["name"]
+                dn = REMIND_LABELS["sit"]["name"]
+                for line in reversed(text.split("\n")):
+                    if "\u5fc3\u8df3" in line:
+                        continue
+                    if dn in line:
+                        return False
+                    if sn in line:
+                        return True
+        except Exception:
+            pass
+        return False
+
     def open_file():
         import os
         if LOG_FILE.exists():
