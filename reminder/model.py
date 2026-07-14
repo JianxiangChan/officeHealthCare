@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Model: config, log, labels - pure data + persistence."""
+"""Model层：配置、日志、提醒文案 —— 纯数据 + 持久化，零依赖。"""
 
 import json
 from datetime import datetime
@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).parent.parent
 CONFIG_FILE = BASE_DIR / "config.json"
 LOG_FILE = BASE_DIR / "logs" / "reminder_log.txt"
 
+# === 默认配置 ===========================================================
 DEFAULT_CONFIG = {
     "water_interval_minutes": 30,
     "stand_interval_minutes": 45,
@@ -18,6 +19,8 @@ DEFAULT_CONFIG = {
     "end_time": "20:30",
 }
 
+# === 可选值列表 ==========================================================
+# 喝水/站立提醒间隔（分钟）
 INTERVAL_OPTIONS = [15, 20, 25, 30, 45, 60, 90, 120]
 STAND_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60]
 TIME_OPTIONS = [
@@ -27,30 +30,34 @@ TIME_OPTIONS = [
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00",
 ]
 
+# === 提醒文案 ===========================================================
 REMIND_LABELS = {
     "water": {
-        "name": "\u559d\u6c34",
-        "icon": "\U0001f4a7",
-        "title": "\u559d\u6c34\u65f6\u95f4",
-        "msg": "\u8d77\u6765\u559d\u676f\u6c34\u5427~\u4fdd\u6301\u6c34\u5206\uff0c\u7cbe\u795e\u6ee1\u6ee1\uff01",
+        "name": "喝水",
+        "icon": "💧",
+        "title": "喝水时间",
+        "msg": "起来喝杯水吧~保持水分，精神满满！",
     },
     "stand": {
-        "name": "\u7ad9\u7acb",
-        "icon": "\U0001f9cd",
-        "title": "\u6d3b\u52a8\u65f6\u95f4",
-        "msg": "\u4e45\u5750\u63d0\u9192\uff01\u7ad9\u8d77\u6765\u8d70\u8d70\uff0c\u4f38\u4e2a\u61d2\u8170\u6d3b\u52a8\u4e00\u4e0b~",
+        "name": "站立",
+        "icon": "🧍",
+        "title": "活动时间",
+        "msg": "久坐提醒！站起来走走，伸个懒腰活动一下~",
     },
     "sit": {
-        "name": "\u5750\u4e0b",
-        "icon": "\U0001f4ba",
-        "title": "\u4f11\u606f\u7ed3\u675f",
-        "msg": "\u5df2\u7ad9\u7acb\u4e00\u4f1a\u513f\u4e86\uff0c\u53ef\u4ee5\u5750\u4e0b\u7ee7\u7eed\u5de5\u4f5c\u5566~",
+        "name": "坐下",
+        "icon": "💺",
+        "title": "休息结束",
+        "msg": "已站立一会儿了，可以坐下继续工作啦~",
     },
 }
 
 
 class Config:
-    """Application config backed by config.json."""
+    """应用配置，读写 config.json。
+    
+    每个 setter 会自动调用 _save() 持久化到文件。
+    """
 
     def __init__(self):
         self._data = self._load()
@@ -70,8 +77,7 @@ class Config:
             json.dumps(self._data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
-    # -- typed accessors ----------------------------------------------------
-
+    # -- 喝水间隔（分钟）----------------------------------------------------
     @property
     def water_interval(self):
         return self._data["water_interval_minutes"]
@@ -81,6 +87,7 @@ class Config:
         self._data["water_interval_minutes"] = value
         self._save()
 
+    # -- 站立间隔（分钟）----------------------------------------------------
     @property
     def stand_interval(self):
         return self._data["stand_interval_minutes"]
@@ -90,6 +97,7 @@ class Config:
         self._data["stand_interval_minutes"] = value
         self._save()
 
+    # -- 站立持续时长（分钟）-------------------------------------------------
     @property
     def stand_duration(self):
         return self._data.get("stand_duration_minutes", 15)
@@ -99,6 +107,7 @@ class Config:
         self._data["stand_duration_minutes"] = value
         self._save()
 
+    # -- 每日提醒开始时间（HH:MM）-------------------------------------------
     @property
     def start_time(self):
         return self._data.get("start_time", "08:30")
@@ -108,6 +117,7 @@ class Config:
         self._data["start_time"] = value
         self._save()
 
+    # -- 每日提醒结束时间（HH:MM）-------------------------------------------
     @property
     def end_time(self):
         return self._data.get("end_time", "20:30")
@@ -117,6 +127,7 @@ class Config:
         self._data["end_time"] = value
         self._save()
 
+    # -- 启用/暂停开关 ------------------------------------------------------
     @property
     def enabled(self):
         return self._data["enabled"]
@@ -128,7 +139,7 @@ class Config:
 
 
 class ReminderLog:
-    """Persistent reminder event log."""
+    """提醒事件日志，记录到 logs/reminder_log.txt。"""
 
     @staticmethod
     def append(kind):
@@ -152,7 +163,7 @@ class ReminderLog:
                         return f"上次{name}: {line[1:17]}"
         except Exception:
             pass
-        return f"上次{name}: \u6682\u65e0\u8bb0\u5f55"
+        return f"上次{name}: 暂无记录"
 
     @staticmethod
     def open_file():

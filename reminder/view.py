@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""View: tray icon, menu helpers, tkinter popup."""
+"""View层：系统托盘图标、菜单构建函数、tkinter通知弹窗。"""
 
 import threading
 import tkinter as tk
@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 
 def create_tray_icon_image():
-    """64x64 blue water-drop tray icon (RGBA)."""
+    """生成64x64蓝色水滴托盘图标（RGBA格式）。"""
     size = 64
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -30,8 +30,8 @@ def build_interval_submenu(options, current, on_select, suffix="分钟"):
     """
     items = []
     for m in options:
-        check = "\u2705 " if m == current else ""
-        label = f"{m}\u5206\u949f{check}"
+        check = "✅ " if m == current else ""
+        label = f"{m}分钟{check}"
         def make_cb(val):
             def cb(icon, item):
                 on_select(val)
@@ -43,31 +43,35 @@ def build_interval_submenu(options, current, on_select, suffix="分钟"):
 
 
 class TrayView:
-    """System tray icon + popup notification view."""
+    """系统托盘图标视图 + tkinter通知弹窗。"""
 
     def __init__(self):
         self._icon = None
 
     def create_icon(self, image, tooltip, menu):
+        """创建托盘图标实例。"""
         self._icon = pystray.Icon("health_reminder", image, tooltip, menu)
 
     def update_menu(self, menu):
+        """运行时刷新右键菜单（配置变更后调用）。"""
         if self._icon:
             self._icon.menu = menu
             self._icon.update_menu()
 
     def run(self):
+        """启动托盘事件循环（阻塞直到 stop() 被调用）。"""
         """Blocking event loop."""
         if self._icon:
             self._icon.run()
 
     def stop(self):
+        """停止托盘事件循环。"""
         if self._icon:
             self._icon.stop()
 
     @staticmethod
     def show_popup(title, message, icon):
-        """Win10 light-theme popup (runs in a new daemon thread)."""
+        """显示Win10浅色风格通知弹窗（在新daemon线程中运行，不阻塞主线程）。"""
 
         def _run():
             root = tk.Tk()
@@ -108,7 +112,7 @@ class TrayView:
                                    bg=BG, fg=FG)
             title_label.pack(side="left")
 
-            close_hint = tk.Label(top, text="\u70b9\u51fb\u5173\u95ed", font=("Microsoft YaHei UI", 8),
+            close_hint = tk.Label(top, text="点击关闭", font=("Microsoft YaHei UI", 8),
                                   bg=BG, fg=HINT)
             close_hint.pack(side="right", padx=(0, 4))
 

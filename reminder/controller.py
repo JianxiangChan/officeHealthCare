@@ -1,5 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
-"""Controller: timer orchestration, menu callbacks, sit-stand cycle."""
+"""Controller层：定时器调度、菜单回调编排、坐-站循环逻辑。"""
 
 import threading
 from datetime import datetime
@@ -29,14 +29,18 @@ class ReminderController:
         self._stand_timer = None
         self._standing_timer = None
 
+        # === 定时器工具方法 ==================================================
+
     @staticmethod
     def _start_timer(interval_sec, callback):
+        """创建一个 daemon 定时器线程。"""
         t = threading.Timer(interval_sec, callback)
         t.daemon = True
         t.start()
         return t
 
     def _cancel_timer(self, timer):
+        """安全取消定时器（忽略已过期的）。"""
         if timer:
             timer.cancel()
 
@@ -47,19 +51,24 @@ class ReminderController:
         end_dt = datetime.strptime(self._config.end_time, "%H:%M")
         return start_dt.time() <= now.time() <= end_dt.time()
 
+    # -- 定时器调度 --------------------------------------------------------
+
     def _schedule_water(self):
+        """调度下次喝水提醒。"""
         self._cancel_timer(self._water_timer)
         self._water_timer = self._start_timer(
             self._config.water_interval * 60, self._on_water_timer
         )
 
     def _schedule_stand(self):
+        """调度下次站立提醒。"""
         self._cancel_timer(self._stand_timer)
         self._stand_timer = self._start_timer(
             self._config.stand_interval * 60, self._on_stand_timer
         )
 
     def _schedule_standing(self):
+        """调度站立持续时长结束提醒。"""
         self._cancel_timer(self._standing_timer)
         self._standing_timer = self._start_timer(
             self._config.stand_duration * 60, self._on_stand_duration_end
@@ -76,6 +85,7 @@ class ReminderController:
         self._view.show_popup(info["title"], info["msg"], info["icon"])
 
     def _on_stand_timer(self):
+        """站立定时器触发：展示弹窗、记日志、启动站立持续时长倒计时。"""
         if not self._config.enabled:
             return
         self._schedule_standing()
@@ -86,6 +96,7 @@ class ReminderController:
         self._view.show_popup(info["title"], info["msg"], info["icon"])
 
     def _on_stand_duration_end(self):
+        """站立持续时长结束：提示可坐下，重启站立定时器。"""
         if not self._config.enabled:
             return
         info = REMIND_LABELS["sit"]
@@ -96,23 +107,24 @@ class ReminderController:
         self._view.update_menu(self.build_menu())
 
     def build_menu(self):
+        """构建完整的系统托盘右键菜单。"""
         enabled = self._config.enabled
         w = self._log.last("water")
         s = self._log.last("stand")
 
         def status():
-            return "  \U0001f9cd \u7ad9\u7acb\u4e2d..." if self._standing_timer else "  \U0001f4ba \u5750\u7740"
+            return "  🧍 站立中..." if self._standing_timer else "  💺 坐着"
 
         return pystray.Menu(
-            pystray.MenuItem("\U0001f4a7 \u5065\u5eb7\u63d0\u9192\u52a9\u624b", None, enabled=False),
+            pystray.MenuItem("💧 健康提醒助手", None, enabled=False),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("\u559d\u6c34\u95f4\u9694",
+            pystray.MenuItem("喝水间隔",
                              build_interval_submenu(INTERVAL_OPTIONS, self._config.water_interval,
                                                     self.set_water_interval)),
-            pystray.MenuItem("\u7ad9\u7acb\u95f4\u9694",
+            pystray.MenuItem("站立间隔",
                              build_interval_submenu(INTERVAL_OPTIONS, self._config.stand_interval,
                                                     self.set_stand_interval)),
-            pystray.MenuItem("\u7ad9\u7acb\u65f6\u957f",
+            pystray.MenuItem("站立时长",
                              build_interval_submenu(STAND_DURATION_OPTIONS, self._config.stand_duration,
                                                     self.set_stand_duration)),
             pystray.Menu.SEPARATOR,
@@ -124,19 +136,19 @@ class ReminderController:
                                                     self.set_end_time, suffix="")),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(
-                "\u2705 \u5df2\u542f\u7528" if enabled else "\u23f8 \u5df2\u6682\u505c",
+                "✅ 已启用" if enabled else "⏸ 已暂停",
                 lambda icon, item: self.toggle_enabled(),
             ),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("\U0001f4a7 \u7acb\u5373\u559d\u6c34\u63d0\u9192", lambda icon, item: self.manual_remind("water")),
-            pystray.MenuItem("\U0001f9cd \u7acb\u5373\u7ad9\u7acb\u63d0\u9192", lambda icon, item: self.manual_remind("stand")),
+            pystray.MenuItem("💧 立即喝水提醒", lambda icon, item: self.manual_remind("water")),
+            pystray.MenuItem("🧍 立即站立提醒", lambda icon, item: self.manual_remind("stand")),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(w, None, enabled=False),
             pystray.MenuItem(s, None, enabled=False),
-            pystray.MenuItem("\U0001f4cb \u67e5\u770b\u63d0\u9192\u65e5\u5fd7", lambda icon, item: self._log.open_file()),
+            pystray.MenuItem("📋 查看提醒日志", lambda icon, item: self._log.open_file()),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(status(), None, enabled=False),
-            pystray.MenuItem("\u9000\u51fa", lambda icon, item: self.stop()),
+            pystray.MenuItem("退出", lambda icon, item: self.stop()),
         )
 
     def set_start_time(self, value):
@@ -151,33 +163,34 @@ class ReminderController:
         self._config.enabled = not self._config.enabled
         if self._config.enabled:
             self._start_all_timers()
-            self._view.show_popup("\u63d0\u9192\u5df2\u6062\u590d", "\u5065\u5eb7\u63d0\u9192\u5df2\u91cd\u65b0\u5f00\u542f", "\U0001f514")
+            self._view.show_popup("提醒已恢复", "健康提醒已重新开启", "🔔")
         else:
             self._cancel_all_timers()
-            self._view.show_popup("\u63d0\u9192\u5df2\u6682\u505c", "\u5065\u5eb7\u63d0\u9192\u5df2\u6682\u505c\uff0c\u597d\u597d\u4f11\u606f\u5427~", "\U0001f515")
+            self._view.show_popup("提醒已暂停", "健康提醒已暂停，好好休息吧~", "🔕")
         self._view.update_menu(self.build_menu())
 
     def set_water_interval(self, minutes):
         self._config.water_interval = minutes
         self._schedule_water()
         info = REMIND_LABELS["water"]
-        self._view.show_popup("\u8bbe\u7f6e\u5df2\u66f4\u65b0", f"{info['name']}\u63d0\u9192\u95f4\u9694\u5df2\u8bbe\u4e3a {minutes} \u5206\u949f", info["icon"])
+        self._view.show_popup("设置已更新", f"{info['name']}提醒间隔已设为 {minutes} 分钟", info["icon"])
         self._view.update_menu(self.build_menu())
 
     def set_stand_interval(self, minutes):
         self._config.stand_interval = minutes
         self._schedule_stand()
         info = REMIND_LABELS["stand"]
-        self._view.show_popup("\u8bbe\u7f6e\u5df2\u66f4\u65b0", f"{info['name']}\u63d0\u9192\u95f4\u9694\u5df2\u8bbe\u4e3a {minutes} \u5206\u949f", info["icon"])
+        self._view.show_popup("设置已更新", f"{info['name']}提醒间隔已设为 {minutes} 分钟", info["icon"])
         self._view.update_menu(self.build_menu())
 
     def set_stand_duration(self, minutes):
         self._config.stand_duration = minutes
         info = REMIND_LABELS["stand"]
-        self._view.show_popup("\u8bbe\u7f6e\u5df2\u66f4\u65b0", f"\u7ad9\u7acb\u65f6\u957f\u5df2\u8bbe\u4e3a {minutes} \u5206\u949f", info["icon"])
+        self._view.show_popup("设置已更新", f"站立时长已设为 {minutes} 分钟", info["icon"])
         self._view.update_menu(self.build_menu())
 
     def manual_remind(self, kind):
+        """立即触发一次指定类型的提醒。"""
         info = REMIND_LABELS[kind]
         self._log.append(kind)
         self._view.show_popup(info["title"], info["msg"], info["icon"])
@@ -198,11 +211,13 @@ class ReminderController:
         self._standing_timer = None
 
     def start(self):
+        """应用入口：创建托盘图标、启动定时器、进入事件循环（阻塞）。"""
         icon_img = create_tray_icon_image()
-        self._view.create_icon(icon_img, "\u5065\u5eb7\u63d0\u9192\u52a9\u624b", self.build_menu())
+        self._view.create_icon(icon_img, "健康提醒助手", self.build_menu())
         self._start_all_timers()
         self._view.run()
 
     def stop(self):
+        """退出应用：取消所有定时器、关闭托盘图标。"""
         self._cancel_all_timers()
         self._view.stop()
