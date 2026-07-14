@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Model层：配置、日志、提醒文案 —— 纯数据 + 持久化，零依赖。"""
+"""Model: config, log, reminder labels -- pure data + persistence, zero deps."""
 
 import json
 from datetime import datetime
@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).parent.parent
 CONFIG_FILE = BASE_DIR / "config.json"
 LOG_FILE = BASE_DIR / "logs" / "reminder_log.txt"
 
-# === 默认配置 ===========================================================
+# === Default config ======================================================
 DEFAULT_CONFIG = {
     "water_interval_minutes": 30,
     "stand_interval_minutes": 45,
@@ -19,8 +19,8 @@ DEFAULT_CONFIG = {
     "end_time": "20:30",
 }
 
-# === 可选值列表 ==========================================================
-# 喝水/站立提醒间隔（分钟）
+# === Option lists ========================================================
+# Water/stand reminder intervals (minutes)
 INTERVAL_OPTIONS = [15, 20, 25, 30, 45, 60, 90, 120]
 STAND_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60]
 TIME_OPTIONS = [
@@ -30,7 +30,7 @@ TIME_OPTIONS = [
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00",
 ]
 
-# === 提醒文案 ===========================================================
+# === Reminder labels (UI strings) ========================================
 REMIND_LABELS = {
     "water": {
         "name": "喝水",
@@ -54,9 +54,9 @@ REMIND_LABELS = {
 
 
 class Config:
-    """应用配置，读写 config.json。
+    """App config backed by config.json.
     
-    每个 setter 会自动调用 _save() 持久化到文件。
+    Each setter auto-saves via _save().
     """
 
     def __init__(self):
@@ -77,7 +77,7 @@ class Config:
             json.dumps(self._data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
-    # -- 喝水间隔（分钟）----------------------------------------------------
+    # -- Water interval (minutes) --------------------------------------------
     @property
     def water_interval(self):
         return self._data["water_interval_minutes"]
@@ -87,7 +87,7 @@ class Config:
         self._data["water_interval_minutes"] = value
         self._save()
 
-    # -- 站立间隔（分钟）----------------------------------------------------
+    # -- Stand interval (minutes) --------------------------------------------
     @property
     def stand_interval(self):
         return self._data["stand_interval_minutes"]
@@ -97,7 +97,7 @@ class Config:
         self._data["stand_interval_minutes"] = value
         self._save()
 
-    # -- 站立持续时长（分钟）-------------------------------------------------
+    # -- Stand duration (minutes) --------------------------------------------
     @property
     def stand_duration(self):
         return self._data.get("stand_duration_minutes", 15)
@@ -107,7 +107,7 @@ class Config:
         self._data["stand_duration_minutes"] = value
         self._save()
 
-    # -- 每日提醒开始时间（HH:MM）-------------------------------------------
+    # -- Daily reminder start time (HH:MM) -----------------------------------
     @property
     def start_time(self):
         return self._data.get("start_time", "08:30")
@@ -117,7 +117,7 @@ class Config:
         self._data["start_time"] = value
         self._save()
 
-    # -- 每日提醒结束时间（HH:MM）-------------------------------------------
+    # -- Daily reminder end time (HH:MM) -------------------------------------
     @property
     def end_time(self):
         return self._data.get("end_time", "20:30")
@@ -127,7 +127,7 @@ class Config:
         self._data["end_time"] = value
         self._save()
 
-    # -- 启用/暂停开关 ------------------------------------------------------
+    # -- Enable/pause switch -------------------------------------------------
     @property
     def enabled(self):
         return self._data["enabled"]
@@ -139,7 +139,7 @@ class Config:
 
 
 class ReminderLog:
-    """提醒事件日志，记录到 logs/reminder_log.txt。"""
+    """Reminder event log, written to logs/reminder_log.txt."""
 
     @staticmethod
     def append(kind):

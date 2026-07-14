@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""View层：系统托盘图标、菜单构建函数、tkinter通知弹窗。"""
+"""View: tray icon, menu builder, tkinter popup notification."""
 
 import threading
 import tkinter as tk
@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 
 def create_tray_icon_image():
-    """生成64x64蓝色水滴托盘图标（RGBA格式）。"""
+    """Generate 64x64 blue droplet tray icon (RGBA)."""
     size = 64
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -43,35 +43,35 @@ def build_interval_submenu(options, current, on_select, suffix="分钟"):
 
 
 class TrayView:
-    """系统托盘图标视图 + tkinter通知弹窗。"""
+    """System tray icon view + tkinter notification popup."""
 
     def __init__(self):
         self._icon = None
 
     def create_icon(self, image, tooltip, menu):
-        """创建托盘图标实例。"""
+        """Create tray icon instance."""
         self._icon = pystray.Icon("health_reminder", image, tooltip, menu)
 
     def update_menu(self, menu):
-        """运行时刷新右键菜单（配置变更后调用）。"""
+        """Refresh right-click menu at runtime (after config change)."""
         if self._icon:
             self._icon.menu = menu
             self._icon.update_menu()
 
     def run(self):
-        """启动托盘事件循环（阻塞直到 stop() 被调用）。"""
+        """Start tray event loop (blocking until stop())."""
         """Blocking event loop."""
         if self._icon:
             self._icon.run()
 
     def stop(self):
-        """停止托盘事件循环。"""
+        """Stop tray event loop."""
         if self._icon:
             self._icon.stop()
 
     @staticmethod
     def show_popup(title, message, icon):
-        """显示Win10浅色风格通知弹窗（在新daemon线程中运行，不阻塞主线程）。"""
+        """Show Win10 light-theme popup (runs in new daemon thread, non-blocking)."""
 
         def _run():
             root = tk.Tk()
