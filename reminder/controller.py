@@ -2,6 +2,7 @@
 """Controller: timer orchestration, menu callbacks, sit-stand cycle."""
 
 import threading
+from datetime import datetime
 
 import pystray
 
@@ -9,6 +10,7 @@ from .model import (
     INTERVAL_OPTIONS,
     REMIND_LABELS,
     STAND_DURATION_OPTIONS,
+    TIME_OPTIONS,
 )
 from .view import (
     TrayView,
@@ -38,6 +40,13 @@ class ReminderController:
         if timer:
             timer.cancel()
 
+    def _is_in_active_window(self, now=None):
+        if now is None:
+            now = datetime.now()
+        start_dt = datetime.strptime(self._config.start_time, "%H:%M")
+        end_dt = datetime.strptime(self._config.end_time, "%H:%M")
+        return start_dt.time() <= now.time() <= end_dt.time()
+
     def _schedule_water(self):
         self._cancel_timer(self._water_timer)
         self._water_timer = self._start_timer(
@@ -59,18 +68,22 @@ class ReminderController:
     def _on_water_timer(self):
         if not self._config.enabled:
             return
+        self._schedule_water()
+        if not self._is_in_active_window():
+            return
         info = REMIND_LABELS["water"]
         self._log.append("water")
         self._view.show_popup(info["title"], info["msg"], info["icon"])
-        self._schedule_water()
 
     def _on_stand_timer(self):
         if not self._config.enabled:
             return
+        self._schedule_standing()
+        if not self._is_in_active_window():
+            return
         info = REMIND_LABELS["stand"]
         self._log.append("stand")
         self._view.show_popup(info["title"], info["msg"], info["icon"])
-        self._schedule_standing()
 
     def _on_stand_duration_end(self):
         if not self._config.enabled:
@@ -103,6 +116,13 @@ class ReminderController:
                              build_interval_submenu(STAND_DURATION_OPTIONS, self._config.stand_duration,
                                                     self.set_stand_duration)),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem("开始时间",
+                             build_interval_submenu(TIME_OPTIONS, self._config.start_time,
+                                                    self.set_start_time, suffix="")),
+            pystray.MenuItem("结束时间",
+                             build_interval_submenu(TIME_OPTIONS, self._config.end_time,
+                                                    self.set_end_time, suffix="")),
+            pystray.Menu.SEPARATOR,
             pystray.MenuItem(
                 "\u2705 \u5df2\u542f\u7528" if enabled else "\u23f8 \u5df2\u6682\u505c",
                 lambda icon, item: self.toggle_enabled(),
@@ -118,6 +138,14 @@ class ReminderController:
             pystray.MenuItem(status(), None, enabled=False),
             pystray.MenuItem("\u9000\u51fa", lambda icon, item: self.stop()),
         )
+
+    def set_start_time(self, value):
+        self._config.start_time = value
+        self._view.update_menu(self.build_menu())
+
+    def set_end_time(self, value):
+        self._config.end_time = value
+        self._view.update_menu(self.build_menu())
 
     def toggle_enabled(self):
         self._config.enabled = not self._config.enabled

@@ -14,10 +14,18 @@ DEFAULT_CONFIG = {
     "stand_interval_minutes": 45,
     "stand_duration_minutes": 15,
     "enabled": True,
+    "start_time": "08:30",
+    "end_time": "20:30",
 }
 
 INTERVAL_OPTIONS = [15, 20, 25, 30, 45, 60, 90, 120]
 STAND_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60]
+TIME_OPTIONS = [
+    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+    "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00",
+]
 
 REMIND_LABELS = {
     "water": {
@@ -89,6 +97,24 @@ class Config:
     @stand_duration.setter
     def stand_duration(self, value):
         self._data["stand_duration_minutes"] = value
+        self._save()
+
+    @property
+    def start_time(self):
+        return self._data.get("start_time", "08:30")
+
+    @start_time.setter
+    def start_time(self, value):
+        self._data["start_time"] = value
+        self._save()
+
+    @property
+    def end_time(self):
+        return self._data.get("end_time", "20:30")
+
+    @end_time.setter
+    def end_time(self, value):
+        self._data["end_time"] = value
         self._save()
 
     @property

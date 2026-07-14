@@ -20,7 +20,7 @@ def create_tray_icon_image():
     return img
 
 
-def build_interval_submenu(options, current, on_select):
+def build_interval_submenu(options, current, on_select, suffix="分钟"):
     """Build a pystray.Menu submenu for selecting an integer option.
 
     Args:
