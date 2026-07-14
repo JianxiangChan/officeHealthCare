@@ -166,6 +166,16 @@ class ReminderLog:
         return f"上次{name}: 暂无记录"
 
     @staticmethod
+    def heartbeat(status):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"[{ts}] 心跳: {status}\n")
+        except Exception:
+            pass
+
+    @staticmethod
     def open_file():
         import os
         if LOG_FILE.exists():

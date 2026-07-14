@@ -28,6 +28,7 @@ class ReminderController:
         self._water_timer = None
         self._stand_timer = None
         self._standing_timer = None
+        self._heartbeat_timer = None
 
         # === 定时器工具方法 ==================================================
 
@@ -103,6 +104,7 @@ class ReminderController:
         self._log.append("sit")
         self._view.show_popup(info["title"], info["msg"], info["icon"])
         self._schedule_stand()
+        self._schedule_heartbeat()
         self._standing_timer = None
         self._view.update_menu(self.build_menu())
 
@@ -179,6 +181,7 @@ class ReminderController:
     def set_stand_interval(self, minutes):
         self._config.stand_interval = minutes
         self._schedule_stand()
+        self._schedule_heartbeat()
         info = REMIND_LABELS["stand"]
         self._view.show_popup("设置已更新", f"{info['name']}提醒间隔已设为 {minutes} 分钟", info["icon"])
         self._view.update_menu(self.build_menu())
@@ -199,9 +202,23 @@ class ReminderController:
         elif kind == "stand":
             self._schedule_standing()
 
+    def _schedule_heartbeat(self):
+        self._cancel_timer(self._heartbeat_timer)
+        self._heartbeat_timer = self._start_timer(300, self._on_heartbeat)
+
+    def _on_heartbeat(self):
+        s = "HB: "
+        s += f"water={self._config.water_interval}m stand={self._config.stand_interval}m "
+        s += f"win={self._config.start_time}-{self._config.end_time} "
+        s += "on" if self._config.enabled else "off"
+        self._log.heartbeat(s)
+        self._heartbeat_timer = None
+        self._schedule_heartbeat()
+
     def _start_all_timers(self):
         self._schedule_water()
         self._schedule_stand()
+        self._schedule_heartbeat()
 
     def _cancel_all_timers(self):
         for t in (self._water_timer, self._stand_timer, self._standing_timer):
@@ -209,6 +226,7 @@ class ReminderController:
         self._water_timer = None
         self._stand_timer = None
         self._standing_timer = None
+        self._heartbeat_timer = None
 
     def start(self):
         """应用入口：创建托盘图标、启动定时器、进入事件循环（阻塞）。"""
